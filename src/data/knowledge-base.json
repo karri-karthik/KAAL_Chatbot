@@ -1,0 +1,28 @@
+{
+  "intents": [
+    {
+      "id": "pricing_query",
+      "tags": ["price", "pricing", "cost", "how much", "fee"],
+      "question": "What are your pricing plans?",
+      "answer": "We offer Starter, Pro, and Enterprise plans tailored to different team sizes and needs. Share your use case and we will recommend the best fit.",
+      "followUp": ["features_query", "trial_query"]
+    },
+    {
+      "id": "features_query",
+      "tags": ["feature", "capability", "what can you do", "functions"],
+      "question": "What can this AI chatbot do?",
+      "answer": "Our website assistant can greet visitors, answer common questions, qualify opportunities, and smoothly hand conversations to your team when a human touch is needed. It captures clean lead details directly inside the chat and keeps the experience fast, on-brand, and always available.",
+      "followUp": ["pricing_query", "demo_request"]
+    },
+    {
+      "id": "demo_request",
+      "tags": ["demo", "schedule demo", "book demo", "walkthrough"],
+      "question": "Can I see a live demo?",
+      "answer": "Absolutely. Share your name and email and we will reach out within one business day to schedule a live demo.",
+      "followUp": ["pricing_query"]
+    }
+  ],
+  "fallback": "I am not sure about that. Let me connect you to our team.",
+  "greeting": "Hi there! How can I help you today?"
+}
+
