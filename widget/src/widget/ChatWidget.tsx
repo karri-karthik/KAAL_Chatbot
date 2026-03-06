@@ -165,7 +165,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
       if (data.requiresLead) {
         setRequiresLead(true);
-        setShowLeadInline(true);
+        window.setTimeout(() => {
+          setShowLeadInline((current) => {
+            if (leadCaptured) return current;
+            return true;
+          });
+        }, 1800);
       }
     } catch (e) {
       setMessages((current) => [
@@ -337,7 +342,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                     onClick={() => {
                       const shouldOpenLead = option.id === 'see-pricing' || option.id === 'book-demo';
                       if (shouldOpenLead) {
-                        setShowLeadInline(true);
+                        window.setTimeout(() => {
+                          setShowLeadInline((current) => {
+                            if (leadCaptured) return current;
+                            return true;
+                          });
+                        }, 1800);
                       }
                       void sendMessage(option.message, { openLeadAfter: shouldOpenLead });
                     }}
