@@ -7,8 +7,8 @@ export default defineConfig({
   build: {
     lib: {
       entry: 'src/widget-entry.tsx',
-      name: 'AiWebsiteChatbot',
-      fileName: () => 'chatbot-widget.iife.js',
+      name: 'KaalChatbot',
+      fileName: () => 'kaal-chatbot-widget.iife.js',
       formats: ['iife'],
     },
     rollupOptions: {

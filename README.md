@@ -1,6 +1,6 @@
-## AI Website Chatbot Widget
+## Kaal Chatbot
 
-Embeddable AI website chatbot with a React-based widget and a Node.js API. The widget mounts via a single script tag on any site, talks only to your `/api/chat` and `/api/leads` endpoints, and stores leads in Supabase.
+Embeddable AI chatbot widget with a React-based frontend and a Node.js API. The widget mounts via a single script tag on any site, talks only to your `/api/chat` and `/api/leads` endpoints, and stores leads in Supabase.
 
 ---
 
@@ -132,7 +132,7 @@ cd widget
 npm run build:widget
 ```
 
-This outputs `dist/chatbot-widget.iife.js`, which you can host on a CDN.
+This outputs `dist/kaal-chatbot-widget.iife.js`, which you can host on a CDN.
 
 #### Embed on a Client Website
 
@@ -140,7 +140,7 @@ Place this before `</body>` on the host site:
 
 ```html
 <script
-  src="https://cdn.yourdomain.com/chatbot-widget.iife.js"
+  src="https://cdn.yourdomain.com/kaal-chatbot-widget.iife.js"
   data-brand-color="#1E3A5F"
   data-position="bottom-right"
   data-api-url="https://api.yourdomain.com"
@@ -150,7 +150,7 @@ Place this before `</body>` on the host site:
 
 The widget:
 
-- Injects a shadow DOM root (`#ai-chatbot-root`) to isolate styles.
+- Injects a shadow DOM root (`#kaal-chatbot-root`) to isolate styles.
 - Renders a floating launcher button, animated chat window, quick options, and inline lead form.
 
 ---
@@ -224,7 +224,6 @@ For a new client/project:
 
 - [ ] Configure OpenAI + Supabase environment variables in your hosting platform.
 - [ ] Apply the Supabase `leads` table migration and RLS rules.
-- [ ] Build and upload `chatbot-widget.iife.js` to your CDN.
+- [ ] Build and upload `kaal-chatbot-widget.iife.js` to your CDN.
 - [ ] Embed the `<script>` tag on the target site.
 - [ ] Run through the E2E flow: greeting → FAQ reply → options → inline lead form → Supabase row.
-

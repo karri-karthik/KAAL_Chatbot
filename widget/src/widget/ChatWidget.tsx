@@ -15,9 +15,10 @@ const GREETING_DELAY_MS = 2000;
 const INACTIVITY_NUDGE_MS = 30000;
 
 const QUICK_OPTIONS = [
-  { id: 'learn-features', label: 'Explore what you can do', message: 'Tell me what this chatbot can do.' },
-  { id: 'see-pricing', label: 'Understand pricing', message: 'I would like to understand pricing.' },
-  { id: 'book-demo', label: 'Book a live demo', message: 'I want to book a live demo.' },
+  { id: 'learn-features', label: 'What can Kaal do?', message: 'Tell me what Kaal Chatbot can do.' },
+  { id: 'see-pricing', label: 'Pricing plans', message: 'What are your pricing plans?' },
+  { id: 'book-demo', label: 'Book a demo', message: 'I want to book a live demo.' },
+  { id: 'contact-team', label: 'Talk to the team', message: 'I want to talk to someone on your team.' },
 ];
 
 export const ChatWidget: React.FC<ChatWidgetProps> = ({
@@ -30,14 +31,14 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [requiresLead, setRequiresLead] = useState(false);
+
   const [showLeadInline, setShowLeadInline] = useState(false);
   const [leadCaptured, setLeadCaptured] = useState(false);
   const [sessionId] = useState(() => {
-    const existing = sessionStorage.getItem('ai-chatbot-session-id');
+    const existing = sessionStorage.getItem('kaal-chatbot-session-id');
     if (existing) return existing;
     const id = uuid();
-    sessionStorage.setItem('ai-chatbot-session-id', id);
+    sessionStorage.setItem('kaal-chatbot-session-id', id);
     return id;
   });
 
@@ -73,7 +74,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           {
             id: 'greeting',
             role: 'assistant',
-            text: 'Hi there! How can I help you today?',
+            text: 'Hi there! I\'m Kaal, your AI assistant. How can I help you today?',
           },
         ];
       });
@@ -115,15 +116,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   useEffect(() => {
     if (!containerRef.current) return;
     containerRef.current.scrollTop = containerRef.current.scrollHeight;
-  }, [messages, requiresLead, showLeadInline]);
+  }, [messages, showLeadInline]);
 
-  const sendMessage = async (rawContent: string, opts?: { openLeadAfter?: boolean }) => {
+  const sendMessage = async (rawContent: string) => {
     if (!rawContent.trim() || !baseUrl) return;
     const content = rawContent.trim();
-    setRequiresLead(false);
-    if (!opts?.openLeadAfter) {
-      setShowLeadInline(false);
-    }
+    setShowLeadInline(false);
 
     const userMessage: ChatMessage = {
       id: `${Date.now()}-user`,
@@ -163,15 +161,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
         },
       ]);
 
-      if (data.requiresLead) {
-        setRequiresLead(true);
-        window.setTimeout(() => {
-          setShowLeadInline((current) => {
-            if (leadCaptured) return current;
-            return true;
-          });
-        }, 1800);
-      }
+
     } catch (e) {
       setMessages((current) => [
         ...current,
@@ -265,7 +255,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                   </svg>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Chat with our AI</div>
+                  <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Kaal Chatbot</div>
                   <div style={{ fontSize: '0.7rem', opacity: 0.75 }}>Answers in seconds, not days</div>
                 </div>
               </div>
@@ -340,16 +330,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                     key={option.id}
                     type="button"
                     onClick={() => {
-                      const shouldOpenLead = option.id === 'see-pricing' || option.id === 'book-demo';
-                      if (shouldOpenLead) {
-                        window.setTimeout(() => {
-                          setShowLeadInline((current) => {
-                            if (leadCaptured) return current;
-                            return true;
-                          });
-                        }, 1800);
+                      void sendMessage(option.message);
+                      if (option.id === 'book-demo' && !leadCaptured) {
+                        window.setTimeout(() => setShowLeadInline(true), 1800);
                       }
-                      void sendMessage(option.message, { openLeadAfter: shouldOpenLead });
                     }}
                     style={{
                       borderRadius: '999px',
@@ -368,7 +352,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
               </div>
             )}
 
-            {(requiresLead || showLeadInline) && !leadCaptured && (
+            {showLeadInline && !leadCaptured && (
               <div style={{ marginTop: '0.9rem' }}>
                 <LeadCaptureForm
                   sessionId={sessionId}

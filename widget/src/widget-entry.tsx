@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ChatWidget } from './widget/ChatWidget';
 
-const hostId = 'ai-chatbot-root';
+const hostId = 'kaal-chatbot-root';
 
 function getDatasetConfig(script: HTMLScriptElement | null) {
   const brandColor = script?.dataset.brandColor || import.meta.env.VITE_WIDGET_BRAND_COLOR || '#1E3A5F';

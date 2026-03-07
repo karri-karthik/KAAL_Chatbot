@@ -29,18 +29,36 @@ const openaiApiKey = process.env.OPENAI_API_KEY;
 const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 
 function matchIntent(message) {
-  const text = message.toLowerCase();
+  const text = message.toLowerCase().trim();
+
+  // Score each intent by how many tags match – pick the best
+  let bestIntent = null;
+  let bestScore = 0;
+
   for (const intent of knowledgeBase.intents) {
-    if (intent.tags.some((tag) => text.includes(tag.toLowerCase()))) {
-      return intent;
+    let score = 0;
+    for (const tag of intent.tags) {
+      const lowerTag = tag.toLowerCase();
+      // Multi-word tags use substring matching; single-word tags use word boundaries
+      if (lowerTag.includes(' ')) {
+        if (text.includes(lowerTag)) score += 2; // multi-word is more specific
+      } else {
+        const regex = new RegExp(`\\b${lowerTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(text)) score += 1;
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestIntent = intent;
     }
   }
-  return null;
+
+  return bestIntent;
 }
 
 function requiresLeadFromIntent(intentId) {
   if (!intentId) return false;
-  return ['pricing_query', 'demo_request', 'contact_request'].includes(intentId);
+  return intentId === 'demo_request';
 }
 
 app.post('/api/chat', async (req, res) => {
@@ -61,10 +79,12 @@ app.post('/api/chat', async (req, res) => {
   } else if (openai) {
     try {
       const systemPrompt = [
-        'You are a helpful website assistant for our organization.',
-        'Only answer using the provided FAQ knowledge base.',
-        'If you are not sure, say you are not sure and suggest speaking with the team.',
-        'Ask for contact details when the user asks about pricing, a demo, or talking to sales.',
+        'You are Kaal, a friendly and knowledgeable AI assistant for the Kaal Chatbot product.',
+        'Answer questions using the provided FAQ knowledge base when possible.',
+        'Keep answers concise, helpful, and conversational.',
+        'If you are not sure, say so and suggest the user reach out to the team.',
+        'When discussing pricing, demos, or sales, let the user know they can share their contact details for follow-up.',
+        'Use a warm, professional tone. You may use occasional emojis sparingly.',
       ].join(' ');
 
       const kbText = knowledgeBase.intents
@@ -161,6 +181,6 @@ app.get('/health', (_req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`AI chatbot API listening on port ${port}`);
+  console.log(`Kaal Chatbot API listening on port ${port}`);
 });
 

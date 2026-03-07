@@ -1,28 +1,73 @@
 {
   "intents": [
     {
+      "id": "greeting",
+      "tags": ["hello", "hi", "hey", "good morning", "good afternoon", "good evening", "howdy", "sup"],
+      "question": "Hello!",
+      "answer": "Hey there! Welcome to Kaal Chatbot. I can help you learn about our features, pricing, or schedule a demo. What would you like to know?"
+    },
+    {
       "id": "pricing_query",
-      "tags": ["price", "pricing", "cost", "how much", "fee"],
+      "tags": ["price", "pricing", "cost", "how much", "fee", "plan", "subscription", "billing", "payment"],
       "question": "What are your pricing plans?",
-      "answer": "We offer Starter, Pro, and Enterprise plans tailored to different team sizes and needs. Share your use case and we will recommend the best fit.",
+      "answer": "We offer three plans:\n\n- Starter: Free for up to 500 chats/month. Great for personal sites.\n- Pro ($49/mo): Unlimited chats, custom branding, lead capture, and analytics.\n- Enterprise: Custom pricing with SLA, dedicated support, and SSO.\n\nWant us to recommend the best fit for your use case? Share your details and we will get back to you!",
       "followUp": ["features_query", "trial_query"]
     },
     {
       "id": "features_query",
-      "tags": ["feature", "capability", "what can you do", "functions"],
-      "question": "What can this AI chatbot do?",
-      "answer": "Our website assistant can greet visitors, answer common questions, qualify opportunities, and smoothly hand conversations to your team when a human touch is needed. It captures clean lead details directly inside the chat and keeps the experience fast, on-brand, and always available.",
+      "tags": ["feature", "capability", "what can you do", "what does it do", "functions", "abilities", "what is kaal"],
+      "question": "What can Kaal Chatbot do?",
+      "answer": "Kaal Chatbot is an AI-powered website assistant that:\n\n- Greets visitors automatically and engages them in conversation\n- Answers FAQs instantly using your knowledge base\n- Captures leads with a smooth inline form when visitors ask about demos\n- Qualifies opportunities and hands off to your team when needed\n- Works 24/7, always on-brand, fast, and reliable\n\nIt embeds on any site with a single script tag and supports full customization.",
       "followUp": ["pricing_query", "demo_request"]
     },
     {
       "id": "demo_request",
-      "tags": ["demo", "schedule demo", "book demo", "walkthrough"],
+      "tags": ["demo", "schedule demo", "book demo", "walkthrough", "show me", "see it in action", "live demo"],
       "question": "Can I see a live demo?",
-      "answer": "Absolutely. Share your name and email and we will reach out within one business day to schedule a live demo.",
+      "answer": "Absolutely! We would love to walk you through Kaal Chatbot. Share your name and email below, and we will schedule a personalized demo within one business day.",
       "followUp": ["pricing_query"]
+    },
+    {
+      "id": "contact_request",
+      "tags": ["contact", "talk to someone", "speak to", "human", "support", "help me", "agent", "team", "reach out", "get in touch", "email", "call"],
+      "question": "How can I contact your team?",
+      "answer": "We would be happy to connect you with our team! You can reach us at support@kaalchatbot.com, or book a demo and someone will reach out shortly.",
+      "followUp": ["demo_request"]
+    },
+    {
+      "id": "trial_query",
+      "tags": ["trial", "free trial", "try", "test", "free", "no credit card"],
+      "question": "Is there a free trial?",
+      "answer": "Yes! Our Starter plan is completely free, up to 500 chats per month with no credit card required. You can upgrade to Pro anytime to unlock advanced features like custom branding, analytics, and lead capture.",
+      "followUp": ["pricing_query", "features_query"]
+    },
+    {
+      "id": "integration_query",
+      "tags": ["integrate", "integration", "install", "embed", "setup", "script tag", "wordpress", "shopify", "wix", "react", "html"],
+      "question": "How do I install Kaal Chatbot on my site?",
+      "answer": "Just add a single script tag before the closing body tag on your website. It works on any platform: HTML, React, WordPress, Shopify, Wix, and more. Customization options like brand color and position are set via data attributes on the script tag.",
+      "followUp": ["features_query"]
+    },
+    {
+      "id": "customization_query",
+      "tags": ["customize", "customization", "brand", "color", "style", "theme", "look", "design", "appearance", "white label"],
+      "question": "Can I customize the chatbot's appearance?",
+      "answer": "Yes! Kaal Chatbot is fully customizable:\n\n- Brand color: match your site's primary color\n- Position: bottom-right or bottom-left\n- Greeting message: set your own welcome text\n- Knowledge base: add your own Q&A pairs\n\nPro and Enterprise plans also support custom CSS and white-labeling.",
+      "followUp": ["pricing_query", "integration_query"]
+    },
+    {
+      "id": "thanks",
+      "tags": ["thank", "thanks", "thank you", "appreciate", "helpful", "great", "awesome", "perfect"],
+      "question": "Thanks!",
+      "answer": "You're welcome! Let me know if there is anything else I can help with."
+    },
+    {
+      "id": "goodbye",
+      "tags": ["bye", "goodbye", "see you", "later", "that's all", "done", "nothing else"],
+      "question": "Goodbye",
+      "answer": "Thanks for chatting! Feel free to come back anytime. Have a great day!"
     }
   ],
-  "fallback": "I am not sure about that. Let me connect you to our team.",
-  "greeting": "Hi there! How can I help you today?"
+  "fallback": "I'm not sure I have the answer to that one. Would you like me to connect you with our team? Just click Book a demo or type 'contact' to get in touch.",
+  "greeting": "Hi there! I'm Kaal, your AI assistant. How can I help you today?"
 }
-

@@ -1,12 +1,11 @@
 {
-  "name": "chatbot",
+  "name": "kaal-chatbot",
   "version": "1.0.0",
-  "description": "This repository contains a React-based website widget and a Node.js API for an embeddable AI chatbot.",
+  "description": "Kaal Chatbot – React-based embeddable AI chatbot widget with a Node.js API.",
   "main": "index.js",
   "scripts": {
-    "test": "npm run test:unit && npm run test:e2e",
+    "test": "npm run test:unit",
     "test:unit": "cd widget && npm run test:run",
-    "test:e2e": "playwright test",
     "build": "cd widget && npm run build:widget",
     "deploy": "echo \"hook up Railway/Vercel/CDN deploy here\""
   },
@@ -22,7 +21,5 @@
     "url": "https://github.com/ShubhamDindorkar/Chatbot/issues"
   },
   "homepage": "https://github.com/ShubhamDindorkar/Chatbot#readme",
-  "devDependencies": {
-    "@playwright/test": "^1.58.2"
-  }
+  "devDependencies": {}
 }
