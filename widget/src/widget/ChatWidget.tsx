@@ -14,6 +14,17 @@ interface ChatWidgetProps {
 const GREETING_DELAY_MS = 2000;
 const INACTIVITY_NUDGE_MS = 30000;
 
+/** Minimum time after the request starts before we begin revealing the reply (feels less “instant”). */
+const ASSISTANT_REPLY_MIN_DELAY_MS = 900;
+/** Base pause between each character when revealing the assistant reply. */
+const TYPEWRITER_MS_PER_CHAR = 10;
+/** Cap total typing time so very long replies do not take minutes. */
+const MAX_TYPING_DURATION_MS = 16000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
 const QUICK_OPTIONS = [
   { id: 'learn-features', label: 'What can Kaal do?', message: 'Tell me what Kaal Chatbot can do.' },
   { id: 'see-pricing', label: 'Pricing plans', message: 'What are your pricing plans?' },
@@ -199,6 +210,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
     try {
       setLoading(true);
+      const requestStartedAt = performance.now();
       const res = await fetch(`${baseUrl}/api/chat`, {
         method: 'POST',
         headers: {
@@ -217,18 +229,35 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       }
 
       const data = (await res.json()) as ChatResponse;
+      const assistantId = `${Date.now()}-assistant`;
 
       setMessages((current) => [
         ...current,
         {
-          id: `${Date.now()}-assistant`,
+          id: assistantId,
           role: 'assistant',
-          text: data.reply,
+          text: '',
           intent: data.intent,
         },
       ]);
 
+      const elapsed = performance.now() - requestStartedAt;
+      await sleep(Math.max(0, ASSISTANT_REPLY_MIN_DELAY_MS - elapsed));
 
+      const fullReply = data.reply;
+      const estimatedTyping = fullReply.length * TYPEWRITER_MS_PER_CHAR;
+      const msPerChar =
+        estimatedTyping > MAX_TYPING_DURATION_MS
+          ? MAX_TYPING_DURATION_MS / Math.max(1, fullReply.length)
+          : TYPEWRITER_MS_PER_CHAR;
+
+      for (let i = 1; i <= fullReply.length; i++) {
+        const slice = fullReply.slice(0, i);
+        setMessages((current) =>
+          current.map((m) => (m.id === assistantId ? { ...m, text: slice } : m)),
+        );
+        await sleep(msPerChar);
+      }
     } catch (e) {
       setMessages((current) => [
         ...current,
