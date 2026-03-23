@@ -62,7 +62,7 @@ function requiresLeadFromIntent(intentId) {
   return intentId === 'demo_request';
 }
 
-function detectPersona(message, context = [], sessionId = null) {
+function detectPersona(message, context = [], sessionId = null, forcedPersona = null) {
   const text = message.toLowerCase().trim();
 
   // Check for specific trigger questions that need immediate response
@@ -187,6 +187,11 @@ function detectPersona(message, context = [], sessionId = null) {
   if (funMessageCount >= 2) {
     // If they've been having fun for 2+ messages, we should nudge them toward value
     return 'nudge';
+  }
+
+  // If user selected a persona via the UI, use it (overrides auto-detection)
+  if (forcedPersona && ['consultant', 'expert', 'peer'].includes(forcedPersona)) {
+    return forcedPersona;
   }
 
   // Default persona selection based on scores (weighting current message more heavily)
@@ -332,7 +337,7 @@ function getConversationContext(context) {
 }
 
 app.post('/api/chat', async (req, res) => {
-  const { message, sessionId, userName, context } = req.body || {};
+  const { message, sessionId, userName, persona: selectedPersona, context } = req.body || {};
 
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message is required' });
@@ -369,11 +374,9 @@ app.post('/api/chat', async (req, res) => {
 
   let reply = '';
   let intentId = '';
-  let persona = 'expert'; // default
 
-  // Detect persona from current message and context
-  const detectedPersona = detectPersona(message, context, sessionId);
-  persona = detectedPersona;
+  // Detect persona, respecting user selection if provided
+  const persona = detectPersona(message, context, sessionId, selectedPersona);
 
   const matched = matchIntent(message);
 

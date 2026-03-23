@@ -1,3 +1,5 @@
+export type PersonaType = 'consultant' | 'expert' | 'peer';
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -10,6 +12,7 @@ export interface ChatRequest {
   message: string;
   sessionId: string;
   userName?: string;
+  persona?: PersonaType;
   context: Array<{ role: 'user' | 'assistant'; content: string }>;
 }
 

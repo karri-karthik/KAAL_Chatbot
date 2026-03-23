@@ -1,7 +1,30 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
+import kaalMascotSrc from '../icons/kaal-mascot-simple.svg?url';
 import { LeadCaptureForm } from './LeadCaptureForm';
-import type { ChatMessage, ChatResponse } from './types';
+import { PersonaSelector, PERSONAS } from './PersonaSelector';
+import type { ChatMessage, ChatResponse, PersonaType } from './types';
+
+function KaalMascotAvatar({ size = 36 }: { size?: number }) {
+  return (
+    <img
+      src={kaalMascotSrc}
+      alt=""
+      width={size}
+      height={size}
+      draggable={false}
+      style={{
+        flexShrink: 0,
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        objectFit: 'cover',
+        border: '1px solid rgba(148, 163, 184, 0.35)',
+        background: 'rgba(15, 23, 42, 0.35)',
+      }}
+    />
+  );
+}
 
 type Position = 'bottom-right' | 'bottom-left';
 
@@ -42,6 +65,11 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<PersonaType | null>(() => {
+    // Check if persona was previously selected (persist across sessions)
+    const stored = localStorage.getItem('kaal-selected-persona');
+    return (stored as PersonaType) || null;
+  });
 
   const [showLeadInline, setShowLeadInline] = useState(false);
   const [leadCaptured, setLeadCaptured] = useState(false);
@@ -88,24 +116,47 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     }, 220);
   };
 
+  const handlePersonaSelect = (persona: PersonaType) => {
+    setSelectedPersona(persona);
+    localStorage.setItem('kaal-selected-persona', persona);
+    // Send welcome message based on selected persona
+    const personaInfo = PERSONAS.find(p => p.id === persona);
+    if (personaInfo) {
+      setMessages([
+        {
+          id: 'persona-intro',
+          role: 'assistant',
+          text: `You're now chatting with ${personaInfo.name}! ${personaInfo.longDescription} Feel free to ask me anything!`,
+        },
+      ]);
+    }
+  };
+
   useEffect(() => {
+    // Only add greeting if persona is selected AND messages are empty AND we're past the delay
     const timer = window.setTimeout(() => {
+      if (!selectedPersona) return;
+
       setMessages((current) => {
         if (current.length > 0) return current;
 
-        // Generate personalized greeting for returning users
-        let greetingText;
+        // Get persona info for personalized greeting
+        const persona = PERSONAS.find(p => p.id === selectedPersona);
+
+        // Generate personalized greeting based on persona and returning status
+        let greetingText: string;
         if (isReturning && userName) {
+          const personaPrefix = persona ? `[${persona.name}] ` : '';
           const returningGreetings = [
-            `Hey ${userName}! Welcome back! Still wrestling with assignments, or ready to enroll in that Cert program? 😉`,
-            `Yo ${userName}! Back for more? Or are we finally signing you up today?`,
-            `${userName}! Good to see you again. That study grind still real, or ready to level up?`,
+            `${personaPrefix}Hey ${userName}! Welcome back! Still wrestling with assignments, or ready to enroll?`,
+            `${personaPrefix}Yo ${userName}! Back for more? What's on your mind this time?`,
+            `${personaPrefix}${userName}! Good to see you again. Ready to continue where we left off?`,
           ];
           greetingText = returningGreetings[Math.floor(Math.random() * returningGreetings.length)];
         } else if (userName) {
-          greetingText = `Hey ${userName}! I'm Kaal. What can I help you with today?`;
+          greetingText = `${persona ? `[${persona.name}] ` : ''}Hey ${userName}! I'm Kaal. How can I help you today?`;
         } else {
-          greetingText = "Hi there! I'm Kaal, your AI assistant. How can I help you today?";
+          greetingText = `${persona ? `[${persona.name}] ` : ''}Hi! I'm Kaal, your AI assistant. What can I do for you?`;
         }
 
         return [
@@ -118,7 +169,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
       });
     }, GREETING_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [userName, isReturning]);
+  }, [selectedPersona, userName, isReturning]);
 
   useEffect(() => {
     if (!open) return;
@@ -220,6 +271,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           message: content,
           sessionId,
           userName: userName || undefined,
+          persona: selectedPersona || undefined,
           context: prevMessages.map((m) => ({ role: m.role, content: m.text })),
         }),
       });
@@ -301,7 +353,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
             ...alignmentStyle,
             width: '420px',
             maxWidth: '100vw',
-            height: '560px',
+            height: selectedPersona ? '560px' : '640px', // taller for persona selection
             maxHeight: '80vh',
             borderRadius: '24px',
             boxShadow: '0 24px 60px rgba(15, 23, 42, 0.45)',
@@ -315,244 +367,341 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
             transition: 'opacity 0.2s ease-out, transform 0.2s ease-out',
           }}
         >
-          <div
-            style={{
-              padding: '0.85rem 1.2rem',
-              borderBottom: '1px solid rgba(148, 163, 184, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: 'linear-gradient(135deg, #0f172a, #020617)',
-              color: '#f9fafb',
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <div
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: '999px',
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 20 20"
-                    aria-hidden="true"
-                    focusable="false"
-                    style={{ fill: 'none', stroke: '#e5e7eb', strokeWidth: 1.5 }}
-                  >
-                    <path d="M4 6.5C4 5.12 5.12 4 6.5 4h7A2.5 2.5 0 0 1 16 6.5v4A2.5 2.5 0 0 1 13.5 13H10l-2.8 2.1c-.6.45-1.45.02-1.45-.74V13A2.5 2.5 0 0 1 4 10.5v-4Z" />
-                  </svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Kaal Chatbot</div>
-                  <div style={{ fontSize: '0.7rem', opacity: 0.75 }}>Answers in seconds, not days</div>
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={closeWindow}
-              aria-label="Close chat"
-              style={{
-                borderRadius: '999px',
-                border: '1px solid rgba(148, 163, 184, 0.4)',
-                padding: '0.25rem 0.5rem',
-                fontSize: '0.75rem',
-                background: 'transparent',
-                color: '#e5e7eb',
-                cursor: 'pointer',
-              }}
-            >
-              ✕
-            </button>
-          </div>
-
-          <div
-            ref={containerRef}
-            style={{
-              flex: 1,
-              padding: '1rem',
-              background:
-                'radial-gradient(circle at top, rgba(226, 232, 240, 0.8), transparent 55%), #f9fafb',
-              overflowY: 'auto',
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {messages.map((m, index) => (
-                <div
-                  key={m.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
-                  }}
-                >
+          {!selectedPersona ? (
+            // Persona Selection Screen
+            <>
+              <div
+                style={{
+                  flexShrink: 0,
+                  position: 'relative',
+                  zIndex: 2,
+                  padding: '0.75rem 0.85rem 0.75rem 1rem',
+                  borderBottom: '1px solid rgba(148, 163, 184, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  minHeight: '56px',
+                  background: 'linear-gradient(135deg, #0f172a, #020617)',
+                  color: '#f9fafb',
+                }}
+              >
+                <KaalMascotAvatar size={40} />
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      maxWidth: '80%',
-                      borderRadius:
-                        m.role === 'user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
-                      padding: '0.7rem 0.9rem',
-                      fontSize: '0.85rem',
-                      lineHeight: 1.4,
-                      backgroundColor: m.role === 'user' ? brandColor : '#ffffff',
-                      color: m.role === 'user' ? '#f9fafb' : '#0f172a',
-                      boxShadow:
-                        m.role === 'user'
-                          ? '0 10px 25px rgba(15, 23, 42, 0.35)'
-                          : '0 8px 18px rgba(15, 23, 42, 0.12)',
-                      animation:
-                        m.role === 'user'
-                          ? 'chat-bubble-in-right 0.18s ease-out both'
-                          : 'chat-bubble-in-left 0.18s ease-out both',
-                      animationDelay: `${index * 20}ms`,
+                      fontSize: '0.92rem',
+                      fontWeight: 600,
+                      lineHeight: 1.25,
+                      wordBreak: 'break-word',
                     }}
                   >
-                    {m.text}
+                    Choose your persona
+                  </div>
+                  <div style={{ fontSize: '0.68rem', opacity: 0.78, marginTop: '0.15rem', lineHeight: 1.3 }}>
+                    Step 1 of 2
                   </div>
                 </div>
-              ))}
-            </div>
-            {!leadCaptured && messages.length > 0 && (
-              <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                {QUICK_OPTIONS.map((option, index) => (
+                <button
+                  type="button"
+                  onClick={closeWindow}
+                  aria-label="Close chat"
+                  style={{
+                    flexShrink: 0,
+                    alignSelf: 'flex-start',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(148, 163, 184, 0.4)',
+                    padding: '0.3rem 0.55rem',
+                    fontSize: '0.8rem',
+                    lineHeight: 1,
+                    background: 'transparent',
+                    color: '#e5e7eb',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  overflow: 'hidden',
+                }}
+              >
+                <PersonaSelector onSelect={handlePersonaSelect} brandColor={brandColor} />
+              </div>
+            </>
+          ) : (
+            // Chat Interface
+            <>
+              <div
+                style={{
+                  padding: '0.65rem 0.75rem 0.65rem 0.9rem',
+                  borderBottom: '1px solid rgba(148, 163, 184, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  minHeight: '56px',
+                  background: 'linear-gradient(135deg, #0f172a, #020617)',
+                  color: '#f9fafb',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', minWidth: 0, flex: 1 }}>
+                  <KaalMascotAvatar size={38} />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div
+                      style={{
+                        fontSize: '0.88rem',
+                        fontWeight: 600,
+                        lineHeight: 1.25,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={
+                        selectedPersona
+                          ? `Kaal · ${PERSONAS.find((p) => p.id === selectedPersona)?.name ?? ''}`
+                          : 'Kaal'
+                      }
+                    >
+                      Kaal
+                      {selectedPersona
+                        ? ` · ${PERSONAS.find((p) => p.id === selectedPersona)?.name ?? ''}`
+                        : ''}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '0.68rem',
+                        opacity: 0.8,
+                        lineHeight: 1.25,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={PERSONAS.find((p) => p.id === selectedPersona)?.shortDescription || ''}
+                    >
+                      {PERSONAS.find((p) => p.id === selectedPersona)?.shortDescription || ''}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexShrink: 0 }}>
                   <button
-                    key={option.id}
                     type="button"
                     onClick={() => {
-                      void sendMessage(option.message);
-                      if (option.id === 'book-demo' && !leadCaptured) {
-                        window.setTimeout(() => setShowLeadInline(true), 1800);
-                      }
+                      setSelectedPersona(null);
+                      localStorage.removeItem('kaal-selected-persona');
+                      setMessages([]);
                     }}
                     style={{
                       borderRadius: '999px',
-                      border: '1px solid rgba(148, 163, 184, 0.9)',
-                      padding: '0.35rem 0.75rem',
-                      fontSize: '0.78rem',
-                      backgroundColor: '#ffffff',
+                      border: '1px solid rgba(148, 163, 184, 0.4)',
+                      padding: '0.25rem 0.6rem',
+                      fontSize: '0.7rem',
+                      background: 'rgba(15, 23, 42, 0.3)',
+                      color: '#e5e7eb',
                       cursor: 'pointer',
-                      animation: 'chat-chip-in 0.2s ease-out both',
-                      animationDelay: `${index * 40}ms`,
+                    }}
+                    title="Change persona"
+                  >
+                    ↻ Change
+                  </button>
+                  <button
+                    type="button"
+                    onClick={closeWindow}
+                    aria-label="Close chat"
+                    style={{
+                      borderRadius: '999px',
+                      border: '1px solid rgba(148, 163, 184, 0.4)',
+                      padding: '0.25rem 0.5rem',
+                      fontSize: '0.75rem',
+                      background: 'transparent',
+                      color: '#e5e7eb',
+                      cursor: 'pointer',
                     }}
                   >
-                    {option.label}
+                    ✕
                   </button>
-                ))}
+                </div>
               </div>
-            )}
 
-            {showLeadInline && !leadCaptured && (
-              <div style={{ marginTop: '0.9rem' }}>
-                <LeadCaptureForm
-                  sessionId={sessionId}
-                  apiBaseUrl={baseUrl}
-                  onSubmitted={() => {
-                    setLeadCaptured(true);
-                    setShowLeadInline(false);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          <div
-            style={{
-              padding: '0.75rem 0.75rem 0.85rem',
-              borderTop: '1px solid rgba(148, 163, 184, 0.35)',
-              background: '#ffffff',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                gap: '0.5rem',
-                alignItems: 'center',
-              }}
-            >
-              <input
-                type="text"
-                placeholder="Ask a question..."
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={handleKeyDown}
+              <div
+                ref={containerRef}
                 style={{
                   flex: 1,
-                  borderRadius: '999px',
-                  border: '1px solid rgba(148, 163, 184, 0.7)',
-                  padding: '0.55rem 0.9rem',
-                  fontSize: '0.85rem',
-                  outline: 'none',
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleSend}
-                disabled={loading || !input.trim()}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '999px',
-                  border: 'none',
-                  background: brandColor,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#f9fafb',
-                  cursor: loading ? 'wait' : 'pointer',
-                  opacity: loading || !input.trim() ? 0.6 : 1,
+                  padding: '1rem',
+                  background:
+                    'radial-gradient(circle at top, rgba(226, 232, 240, 0.8), transparent 55%), #f9fafb',
+                  overflowY: 'auto',
                 }}
               >
-                ▶
-              </button>
-            </div>
-          </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {messages.map((m, index) => (
+                    <div
+                      key={m.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
+                      }}
+                    >
+                      <div
+                        style={{
+                          maxWidth: '80%',
+                          borderRadius:
+                            m.role === 'user' ? '18px 4px 18px 18px' : '4px 18px 18px 18px',
+                          padding: '0.7rem 0.9rem',
+                          fontSize: '0.85rem',
+                          lineHeight: 1.4,
+                          backgroundColor: m.role === 'user' ? brandColor : '#ffffff',
+                          color: m.role === 'user' ? '#f9fafb' : '#0f172a',
+                          boxShadow:
+                            m.role === 'user'
+                              ? '0 10px 25px rgba(15, 23, 42, 0.35)'
+                              : '0 8px 18px rgba(15, 23, 42, 0.12)',
+                          animation:
+                            m.role === 'user'
+                              ? 'chat-bubble-in-right 0.18s ease-out both'
+                              : 'chat-bubble-in-left 0.18s ease-out both',
+                          animationDelay: `${index * 20}ms`,
+                        }}
+                      >
+                        {m.text}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {!leadCaptured && messages.length > 0 && (
+                  <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {QUICK_OPTIONS.map((option, index) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        onClick={() => {
+                          void sendMessage(option.message);
+                          if (option.id === 'book-demo' && !leadCaptured) {
+                            window.setTimeout(() => setShowLeadInline(true), 1800);
+                          }
+                        }}
+                        style={{
+                          borderRadius: '999px',
+                          border: '1px solid rgba(148, 163, 184, 0.9)',
+                          padding: '0.35rem 0.75rem',
+                          fontSize: '0.78rem',
+                          backgroundColor: '#ffffff',
+                          cursor: 'pointer',
+                          animation: 'chat-chip-in 0.2s ease-out both',
+                          animationDelay: `${index * 40}ms`,
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {showLeadInline && !leadCaptured && (
+                  <div style={{ marginTop: '0.9rem' }}>
+                    <LeadCaptureForm
+                      sessionId={sessionId}
+                      apiBaseUrl={baseUrl}
+                      onSubmitted={() => {
+                        setLeadCaptured(true);
+                        setShowLeadInline(false);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div
+                style={{
+                  padding: '0.75rem 0.75rem 0.85rem',
+                  borderTop: '1px solid rgba(148, 163, 184, 0.35)',
+                  background: '#ffffff',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    alignItems: 'center',
+                  }}
+                >
+                  <input
+                    type="text"
+                    placeholder={`Ask ${selectedPersona === 'consultant' ? 'the consultant' : selectedPersona === 'expert' ? 'the expert' : 'your peer'}...`}
+                    value={input}
+                    onChange={(event) => setInput(event.target.value)}
+                    onKeyDown={handleKeyDown}
+                    style={{
+                      flex: 1,
+                      borderRadius: '999px',
+                      border: '1px solid rgba(148, 163, 184, 0.7)',
+                      padding: '0.55rem 0.9rem',
+                      fontSize: '0.85rem',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSend}
+                    disabled={loading || !input.trim()}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '999px',
+                      border: 'none',
+                      background: brandColor,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#f9fafb',
+                      cursor: loading ? 'wait' : 'pointer',
+                      opacity: loading || !input.trim() ? 0.6 : 1,
+                    }}
+                  >
+                    ▶
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {!open && (
         <button
           type="button"
+          className="kaal-chat-launcher"
           onClick={openWindow}
           style={{
             position: 'fixed',
             ...alignmentStyle,
-            width: '60px',
-            height: '60px',
-            borderRadius: '999px',
+            padding: 0,
+            margin: 0,
             border: 'none',
-            background:
-              'radial-gradient(circle at 30% 0%, rgba(248, 250, 252, 0.18), transparent 55%), ' +
-              brandColor,
-            color: '#f9fafb',
-            boxShadow: '0 18px 40px rgba(15, 23, 42, 0.55)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            background: 'transparent',
             cursor: 'pointer',
             zIndex: 2147483000,
+            lineHeight: 0,
           }}
           aria-label="Open chat"
         >
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            focusable="false"
-            style={{ fill: 'none', stroke: '#f9fafb', strokeWidth: 1.8 }}
-          >
-            <rect x="5" y="6" width="14" height="10" rx="3" />
-            <path d="M9 17.5 8 19.5" />
-            <path d="M12 10h4" />
-            <path d="M8 10h1.5" />
-          </svg>
+          <img
+            src={kaalMascotSrc}
+            alt=""
+            width={72}
+            height={72}
+            draggable={false}
+            style={{
+              display: 'block',
+              width: 72,
+              height: 72,
+              objectFit: 'contain',
+            }}
+          />
         </button>
       )}
     </>

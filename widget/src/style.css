@@ -51,4 +51,28 @@ body {
   }
 }
 
+/* Floating launcher: mascot is the whole control (no filled circle behind it) */
+.kaal-chat-launcher {
+  -webkit-tap-highlight-color: transparent;
+  filter: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.42));
+  transition: filter 0.15s ease, transform 0.12s ease;
+}
+
+.kaal-chat-launcher:focus {
+  outline: none;
+}
+
+.kaal-chat-launcher:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.kaal-chat-launcher:hover {
+  filter: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.42)) brightness(1.06);
+}
+
+.kaal-chat-launcher:active {
+  transform: scale(0.97);
+}
 
