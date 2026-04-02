@@ -1,2 +1,3 @@
-# Claude Code — local OpenRouter / API secrets (do not commit)
 .claude/
+.env
+node_modules/
